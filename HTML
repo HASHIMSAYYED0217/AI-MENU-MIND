@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MenuMind AI Menu Generator</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f4f4f9; margin: 0; padding: 0; }
+  .chat-container { max-width: 500px; margin: 2rem auto; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 600px; }
+  .chat-messages { flex: 1; padding: 1rem; overflow-y: auto; }
+  .message { margin-bottom: 1rem; padding: 0.75rem 1rem; border-radius: 20px; max-width: 80%; }
+  .user { background: #007bff; color: white; align-self: flex-end; }
+  .bot { background: #e1e1e1; color: #333; align-self: flex-start; }
+  .input-area { display: flex; padding: 1rem; border-top: 1px solid #ddd; }
+  input[type=text] { flex: 1; padding: 0.75rem 1rem; border: 1px solid #ccc; border-radius: 20px; font-size: 1rem; }
+  button { margin-left: 1rem; padding: 0.75rem 1.5rem; border: none; background: #007bff; color: white; border-radius: 20px; font-size: 1rem; cursor: pointer; }
+  button:disabled { background: #aaa; cursor: not-allowed; }
+</style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-messages" id="chatMessages">
+      <div class="message bot">Hi! Enter ingredients or a theme, and I’ll suggest a menu idea.</div>
+    </div>
+    <form id="chatForm" class="input-area">
+      <input type="text" id="userInput" placeholder="e.g. chicken, garlic, lemon" autocomplete="off" required />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+<script>
+  const API_URL = 'http://localhost:3000/menu-idea'; // change to your server URL
+
+  const chatMessages = document.getElementById('chatMessages');
+  const chatForm = document.getElementById('chatForm');
+  const userInput = document.getElementById('userInput');
+
+  function addMessage(text, sender) {
+    const msg = document.createElement('div');
+    msg.textContent = text;
+    msg.classList.add('message', sender);
+    chatMessages.appendChild(msg);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  chatForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const input = userInput.value.trim();
+    if (!input) return;
+
+    addMessage(input, 'user');
+    userInput.value = '';
+    userInput.disabled = true;
+    chatForm.querySelector('button').disabled = true;
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ingredients: input }),
+      });
+      const data = await response.json();
+      if (data.idea) {
+        addMessage(data.idea, 'bot');
+      } else {
+        addMessage('Sorry, no idea generated. Try again!', 'bot');
+      }
+    } catch {
+      addMessage('Oops, something went wrong. Try again later.', 'bot');
+    }
+
+    userInput.disabled = false;
+    chatForm.querySelector('button').disabled = false;
+    userInput.focus();
+  });
+</script>
+</body>
+</html>
